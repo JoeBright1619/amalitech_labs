@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build folders in any subproject
+**/dist/
+**/build/
+**/.mypy_cache/
+**/.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Poetry
+# keep pyproject.toml and poetry.lock
+# ignore virtual envs if created locally
+**/.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Databases
+*.db
+*.sqlite3
+
+# Logs
+*.log
+
+# Env files
+.env
+.env.local
