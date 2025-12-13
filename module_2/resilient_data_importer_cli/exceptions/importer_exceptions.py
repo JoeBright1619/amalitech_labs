@@ -8,3 +8,7 @@ class FileFormatError(ImporterError):
 
 class MissingFieldError(ImporterError):
     """Raised when a required CSV field is missing."""
+
+
+class DuplicateUserError(ImporterError):
+    """Raised when a user already exists in the repository."""
