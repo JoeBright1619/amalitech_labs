@@ -1,5 +1,5 @@
 [project]
-name = "amalitech-labs"
+name = "amalitech_labs"
 version = "0.1.0"
 description = ""
 authors = [
@@ -28,4 +28,12 @@ exclude = "module_2/(git-powered_configuration_management_cli|multi-stage_data_p
 dev = [
     "mypy (>=1.19.0,<2.0.0)",
     "pre-commit (>=4.5.0,<5.0.0)"
+]
+
+[tool.poetry.scripts]
+resilient-importer = "module_2.resilient_data_importer_cli.cli:main"
+
+[tool.poetry]
+packages = [
+    { include = "module_2" }
 ]
