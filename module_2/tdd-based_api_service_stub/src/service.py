@@ -1,14 +1,10 @@
 from .models import WeatherForecast
-from .exceptions import CityNotFoundError
+from .provider import WeatherProvider
 
 
 class WeatherService:
-    def get_forecast(self, city: str) -> WeatherForecast:
-        if city == "Kigali":
-            return WeatherForecast(
-                city="Kigali",
-                temperature_celsius=25,
-                condition="Sunny",
-            )
+    def __init__(self, provider: WeatherProvider):
+        self.provider = provider
 
-        raise CityNotFoundError(f"No weather data for city: {city}")
+    def get_forecast(self, city: str) -> WeatherForecast:
+        return self.provider.get_weather(city)
