@@ -43,3 +43,13 @@ def test_service_uses_provider():
 
     with pytest.raises(CityNotFoundError):
         service.get_forecast("UnknownCity")
+
+
+def test_get_forecast_logs(mock_logger):
+    provider = MockProvider()
+    service = WeatherService(provider=provider)
+
+    service.get_forecast("Kigali")
+
+    # Assert that logger.info was called at least twice
+    assert mock_logger.info.call_count >= 2
