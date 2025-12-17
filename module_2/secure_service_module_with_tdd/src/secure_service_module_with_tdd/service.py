@@ -21,6 +21,8 @@ class UserService:
         if existing:
             raise UserAlreadyExistsError(f"User {username} already exists")
 
-        user = User(username=username, password_hash=password)
+        user = user = User(
+            username=username, password_hash=self._password_hasher.hash(password)
+        )
         self._repository.save(user)
         return user
