@@ -1,9 +1,10 @@
+import bcrypt
 from ..interfaces.hasher import PasswordHasher
 
 
 class BcryptPasswordHasher(PasswordHasher):
     def hash(self, password: str) -> str:
-        raise NotImplementedError
+        return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
     def verify(self, password: str, password_hash: str) -> bool:
-        raise NotImplementedError
+        return bcrypt.checkpw(password.encode(), password_hash.encode())
