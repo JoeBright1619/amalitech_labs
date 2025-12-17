@@ -7,6 +7,10 @@ from src.secure_service_module_with_tdd.implementations.bcrypt_hasher import (
     BcryptPasswordHasher,
 )
 from src.secure_service_module_with_tdd.exceptions import UserAlreadyExistsError
+from src.secure_service_module_with_tdd.exceptions import (
+    UserNotFoundError,
+    InvalidPasswordError,
+)
 
 
 def test_register_user_success():
@@ -40,3 +44,35 @@ def test_register_user_stores_hashed_password():
     assert user.password_hash != "strongpassword"
     # And verify method should return True
     assert hasher.verify("strongpassword", user.password_hash)
+
+
+def test_authenticate_user_success():
+    repo = InMemoryUserRepository()
+    hasher = BcryptPasswordHasher()
+    service = UserService(repo, hasher)
+
+    service.register_user("alice", "strongpassword")
+
+    user = service.authenticate_user("alice", "strongpassword")
+
+    assert user.username == "alice"
+
+
+def test_authenticate_user_not_found():
+    repo = InMemoryUserRepository()
+    hasher = BcryptPasswordHasher()
+    service = UserService(repo, hasher)
+
+    with pytest.raises(UserNotFoundError):
+        service.authenticate_user("ghost", "password")
+
+
+def test_authenticate_user_invalid_password():
+    repo = InMemoryUserRepository()
+    hasher = BcryptPasswordHasher()
+    service = UserService(repo, hasher)
+
+    service.register_user("alice", "strongpassword")
+
+    with pytest.raises(InvalidPasswordError):
+        service.authenticate_user("alice", "wrongpassword")
