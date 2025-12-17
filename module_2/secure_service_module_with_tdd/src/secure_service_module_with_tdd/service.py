@@ -1,7 +1,11 @@
 from .interfaces.repository import UserRepository
 from .interfaces.hasher import PasswordHasher
 from .models import User
-from .exceptions import UserAlreadyExistsError, InvalidPasswordError
+from .exceptions import (
+    UserAlreadyExistsError,
+    InvalidPasswordError,
+    UserNotFoundError,
+)
 
 
 class UserService:
@@ -25,4 +29,15 @@ class UserService:
             username=username, password_hash=self._password_hasher.hash(password)
         )
         self._repository.save(user)
+        return user
+
+    def authenticate_user(self, username: str, password: str) -> User:
+        user = self._repository.get_by_username(username)
+
+        if not user:
+            raise UserNotFoundError(f"User {username} not found")
+
+        if not self._password_hasher.verify(password, user.password_hash):
+            raise InvalidPasswordError("Invalid credentials")
+
         return user
