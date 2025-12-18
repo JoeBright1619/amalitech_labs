@@ -1,9 +1,9 @@
 import pytest
 
-from src.service import WeatherService
-from src.exceptions import CityNotFoundError
-from src.provider import WeatherProvider
-from src.models import WeatherForecast
+from tdd_based_api_service_stub.service import WeatherService
+from tdd_based_api_service_stub.exceptions import CityNotFoundError
+from tdd_based_api_service_stub.provider import WeatherProvider
+from tdd_based_api_service_stub.models import WeatherForecast
 
 
 class MockProvider(WeatherProvider):
