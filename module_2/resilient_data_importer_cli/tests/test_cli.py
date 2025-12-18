@@ -12,6 +12,8 @@ def test_cli_runs_successfully(tmp_path: Path):
             sys.executable,
             "-m",
             "module_2.resilient_data_importer_cli.cli",
+            "--db",
+            str(tmp_path / "db.json"),
             str(csv_file),
         ],
         capture_output=True,
