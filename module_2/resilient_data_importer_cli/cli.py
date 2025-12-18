@@ -1,3 +1,7 @@
+"""
+Command-line interface for the Resilient Data Importer.
+"""
+
 import argparse
 from pathlib import Path
 import sys
@@ -8,6 +12,11 @@ from .exceptions.importer_exceptions import ImporterError
 
 
 def main() -> None:
+    """
+    Main entry point for the CLI tool.
+
+    Parses command-line arguments and orchestrates the import process.
+    """
     BASE_DIR = Path(__file__).resolve().parent
     parser = argparse.ArgumentParser(
         description="Import users from a CSV file into a JSON database"

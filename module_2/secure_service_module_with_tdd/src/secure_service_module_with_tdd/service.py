@@ -10,6 +10,13 @@ import logging
 
 
 class UserService:
+    """
+    Service for managing user registration and authentication.
+
+    This service orchestrates the business logic for user management,
+    leveraging repository and password hashing abstractions.
+    """
+
     def __init__(
         self,
         repository: UserRepository,
@@ -21,6 +28,20 @@ class UserService:
         self._logger = logger or logging.getLogger(__name__)
 
     def register_user(self, username: str, password: str) -> User:
+        """
+        Register a new user with a username and password.
+
+        Args:
+            username: The unique username for the new user.
+            password: The plain-text password (must be at least 8 characters).
+
+        Returns:
+            The newly created User object.
+
+        Raises:
+            InvalidPasswordError: If the password is less than 8 characters.
+            UserAlreadyExistsError: If a user with the same username already exists.
+        """
         if len(password) < 8:
             raise InvalidPasswordError("Password too short")
 
@@ -36,6 +57,20 @@ class UserService:
         return user
 
     def authenticate_user(self, username: str, password: str) -> User:
+        """
+        Authenticate a user by username and password.
+
+        Args:
+            username: The username of the user.
+            password: The plain-text password to verify.
+
+        Returns:
+            The authenticated User object.
+
+        Raises:
+            UserNotFoundError: If the user does not exist.
+            InvalidPasswordError: If the password verification fails.
+        """
         user = self._repository.get_by_username(username)
 
         if not user:

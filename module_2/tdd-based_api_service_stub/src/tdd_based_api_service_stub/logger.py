@@ -1,3 +1,7 @@
+"""
+Logging configuration for the Weather Service.
+"""
+
 import logging
 
 # Configure structured logging
