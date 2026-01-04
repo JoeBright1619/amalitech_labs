@@ -1,0 +1,40 @@
+{
+    "total_students": 5,
+    "overall_average": 83.35,
+    "grade_distribution": {
+        "A": 4,
+        "B": 2,
+        "C": 1
+    },
+    "major_distribution": {
+        "Computer Science": 2,
+        "Mathematics": 2,
+        "Physics": 1
+    },
+    "top_performers": [
+        {
+            "name": "David Wilson",
+            "student_id": "S104",
+            "gpa": 95.0
+        },
+        {
+            "name": "Alice Johnson",
+            "student_id": "S101",
+            "gpa": 88.75
+        },
+        {
+            "name": "Charlie Brown",
+            "student_id": "S103",
+            "gpa": 88.0
+        }
+    ],
+    "rolling_averages_trend": [
+        85.5,
+        88.75,
+        85.16666666666667,
+        84.375,
+        85.1,
+        87.0,
+        81.6
+    ]
+}
