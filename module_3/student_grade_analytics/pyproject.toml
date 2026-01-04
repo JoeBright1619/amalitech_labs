@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "student-grade-analytics"
+version = "0.1.0"
+description = "Student Grade Analytics Tool with Advanced Collections"
+authors = ["JoeBright1619"]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+pytest = "*"
+mypy = "*"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
