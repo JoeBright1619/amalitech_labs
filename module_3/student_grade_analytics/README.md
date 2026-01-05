@@ -17,12 +17,11 @@ This tool processes student records and course grades to provide statistical ins
 
 ## Setup & Usage
 
-1. Navigate to the lab directory:
+1. Open your terminal in the lab directory:
+   `D:\projects\amaliTech\amalitech_labs\module_3\student_grade_analytics`
+2. Configure the environment:
    ```bash
-   cd module_3/student_grade_analytics
-   ```
-2. Install dependencies:
-   ```bash
+   poetry env use python
    poetry install
    ```
 3. Run the tool:
@@ -31,7 +30,7 @@ This tool processes student records and course grades to provide statistical ins
    ```
 4. Run tests:
    ```bash
-   poetry run pytest
+   poetry run python -m pytest
    ```
 
 ## Design Considerations

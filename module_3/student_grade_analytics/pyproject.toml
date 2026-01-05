@@ -5,7 +5,7 @@ description = "Student Grade Analytics Tool with Advanced Collections"
 authors = ["JoeBright1619"]
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.13"
+python = ">=3.11,<3.14"
 pytest = "*"
 mypy = "*"
 matplotlib = "^3.10.8"
