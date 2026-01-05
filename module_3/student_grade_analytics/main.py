@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 from src.file_handler import FileHandler
 from src.analytics import GradeAnalyzer
+from src.visualizer import Visualizer
 
 
 def main():
@@ -33,6 +34,12 @@ def main():
         # Save Report
         print(f"Saving report to {report_json}...")
         FileHandler.save_report_to_json(report, report_json)
+
+        # Generate Visualizations
+        print("Generating visualizations...")
+        visualizer = Visualizer(base_dir / "plots")
+        visualizer.plot_grade_distribution(report["grade_distribution"])
+        visualizer.plot_major_distribution(report["major_distribution"])
 
         # Visual Output
         print("\n--- Summary Report ---")

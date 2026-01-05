@@ -8,6 +8,7 @@ This tool processes student records and course grades to provide statistical ins
 - **Aggregation**: Uses `Counter` for distributions and `defaultdict` for grouping.
 - **Trend Analysis**: Implements a rolling average using `deque`.
 - **Reporting**: Generates ordered JSON reports using `OrderedDict` and `TypedDict`.
+- **Visualizations**: Automatically generates bar and pie charts for analysis results.
 
 ## Requirements
 

@@ -8,6 +8,7 @@ authors = ["JoeBright1619"]
 python = ">=3.11,<3.13"
 pytest = "*"
 mypy = "*"
+matplotlib = "^3.10.8"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
