@@ -1,0 +1,19 @@
+[project]
+name = "log-analysis-system"
+version = "0.1.0"
+description = "High-Performance Log Analysis System with Pythonic Optimization"
+authors = [
+    {name = "JoeBright1619"}
+]
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "pytest (>=9.0.2,<10.0.0)",
+    "mypy (>=1.19.1,<2.0.0)",
+    "psutil (>=7.2.1,<8.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
