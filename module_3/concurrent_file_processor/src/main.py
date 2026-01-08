@@ -92,8 +92,12 @@ def main():
         )
 
     if args.mode == "async" or args.mode == "all":
-        logger.info("Async mode not yet implemented")
-        # TODO: Implement async mode
+        from .async_processor import run_async_benchmark
+
+        logger.info("Running async processing...")
+        output_dir = args.output_dir / "async"
+        ensure_dir(output_dir)
+        results["async"] = run_async_benchmark(args.input_dir, output_dir)
 
     # Print results
     print("\n" + "=" * 60)
