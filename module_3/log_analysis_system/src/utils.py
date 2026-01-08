@@ -32,6 +32,30 @@ def timer(func: Callable) -> Callable:
     return wrapper
 
 
+def log_call(logger=None) -> Callable:
+    """
+    Decorator that logs the start and end of a function call.
+    Demonstrates usage of decorators for tracing.
+    """
+
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs) -> Any:
+            log = logger or print
+            log(f"[Trace] calling {func.__name__}...")
+            try:
+                result = func(*args, **kwargs)
+                log(f"[Trace] {func.__name__} returned successfully.")
+                return result
+            except Exception as e:
+                log(f"[Trace] {func.__name__} failed: {e}")
+                raise
+
+        return wrapper
+
+    return decorator
+
+
 def get_memory_usage() -> float:
     """Returns the current memory usage of the process in MB."""
     process = psutil.Process(os.getpid())
