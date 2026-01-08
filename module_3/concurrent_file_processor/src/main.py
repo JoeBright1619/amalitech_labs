@@ -74,8 +74,12 @@ def main():
         results["sequential"] = run_sequential_benchmark(args.input_dir, output_dir)
 
     if args.mode == "threading" or args.mode == "all":
-        logger.info("Threading mode not yet implemented")
-        # TODO: Implement threading mode
+        from .threading_processor import run_threading_benchmark
+
+        logger.info("Running threading processing...")
+        output_dir = args.output_dir / "threading"
+        ensure_dir(output_dir)
+        results["threading"] = run_threading_benchmark(args.input_dir, output_dir)
 
     if args.mode == "multiprocessing" or args.mode == "all":
         logger.info("Multiprocessing mode not yet implemented")
