@@ -54,6 +54,12 @@ def main():
         help="Output directory for processed files",
     )
 
+    parser.add_argument(
+        "--compare",
+        action="store_true",
+        help="Run all modes and generate comparison report",
+    )
+
     args = parser.parse_args()
 
     # Generate dataset if requested
@@ -63,6 +69,21 @@ def main():
 
     # Ensure output directory exists
     ensure_dir(args.output_dir)
+
+    # Run comparison mode if requested
+    if args.compare:
+        from .performance_comparison import (
+            run_all_benchmarks,
+            generate_comparison_report,
+        )
+
+        logger.info("Running comparison mode - all benchmarks will be executed")
+        results = run_all_benchmarks(args.input_dir, args.output_dir)
+
+        # Generate report
+        report_file = args.output_dir / "performance_report.txt"
+        generate_comparison_report(results, report_file)
+        return
 
     # Run processing based on mode
     results = {}
