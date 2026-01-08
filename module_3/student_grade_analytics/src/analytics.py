@@ -9,9 +9,11 @@ from .models import Student
 class ReportStructure(TypedDict):
     total_students: int
     overall_average: float
+    gpa_statistics: Dict[str, float]
     grade_distribution: Dict[str, int]
     major_distribution: Dict[str, int]
     top_performers: List[Dict[str, Any]]
+    percentile_rankings: Dict[str, float]
     rolling_averages: List[float]
 
 
@@ -38,6 +40,41 @@ class GradeAnalyzer:
             for s in sorted_students[:n]
         ]
 
+    def get_gpa_statistics(self) -> Dict[str, float]:
+        """Calculates Mean, Median, and Mode of GPAs."""
+        gpas = [round(s.gpa, 2) for s in self.students if s.grades]
+        if not gpas:
+            return {"mean": 0.0, "median": 0.0, "mode": 0.0}
+
+        return {
+            "mean": round(statistics.mean(gpas), 2),
+            "median": round(statistics.median(gpas), 2),
+            "mode": round(statistics.mode(gpas), 2),
+        }
+
+    def calculate_percentiles(self) -> Dict[str, float]:
+        """Calculates the percentile ranking for each student based on GPA."""
+        gpas = [s.gpa for s in self.students if s.grades]
+        if not gpas:
+            return {}
+
+        gpas.sort()
+        n = len(gpas)
+        percentiles = {}
+
+        for student in self.students:
+            if not student.grades:
+                percentiles[student.student_id] = 0.0
+                continue
+
+            # Simple percentile rank: (count of scores < score) / total_scores * 100
+            # Or using scipy's style, strictly simpler here:
+            rank = sum(1 for g in gpas if g < student.gpa)
+            percentile = (rank / n) * 100
+            percentiles[student.student_id] = round(percentile, 2)
+
+        return percentiles
+
     def generate_full_report(self) -> OrderedDict:
         """Generates a comprehensive report in a specific order."""
         all_grades = []
@@ -55,9 +92,11 @@ class GradeAnalyzer:
             [
                 ("total_students", len(self.students)),
                 ("overall_average", round(self.get_overall_average(), 2)),
+                ("gpa_statistics", self.get_gpa_statistics()),
                 ("grade_distribution", dict(count_grade_distribution(all_grades))),
                 ("major_distribution", self.get_major_distribution()),
                 ("top_performers", self.get_top_performers()),
+                ("percentile_rankings", self.calculate_percentiles()),
                 (
                     "rolling_averages_trend",
                     rolling_history[-10:] if rolling_history else [],

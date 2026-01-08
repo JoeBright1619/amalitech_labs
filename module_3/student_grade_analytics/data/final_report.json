@@ -1,6 +1,11 @@
 {
     "total_students": 5,
     "overall_average": 83.35,
+    "gpa_statistics": {
+        "mean": 83.35,
+        "median": 88.0,
+        "mode": 88.75
+    },
     "grade_distribution": {
         "A": 4,
         "B": 2,
@@ -28,6 +33,13 @@
             "gpa": 88.0
         }
     ],
+    "percentile_rankings": {
+        "S101": 60.0,
+        "S102": 20.0,
+        "S103": 40.0,
+        "S104": 80.0,
+        "S105": 0.0
+    },
     "rolling_averages_trend": [
         85.5,
         88.75,
