@@ -82,8 +82,14 @@ def main():
         results["threading"] = run_threading_benchmark(args.input_dir, output_dir)
 
     if args.mode == "multiprocessing" or args.mode == "all":
-        logger.info("Multiprocessing mode not yet implemented")
-        # TODO: Implement multiprocessing mode
+        from .multiprocessing_processor import run_multiprocessing_benchmark
+
+        logger.info("Running multiprocessing processing...")
+        output_dir = args.output_dir / "multiprocessing"
+        ensure_dir(output_dir)
+        results["multiprocessing"] = run_multiprocessing_benchmark(
+            args.input_dir, output_dir
+        )
 
     if args.mode == "async" or args.mode == "all":
         logger.info("Async mode not yet implemented")
