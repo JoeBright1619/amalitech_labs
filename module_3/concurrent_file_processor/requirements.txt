@@ -2,3 +2,4 @@ requests
 Pillow
 aiohttp
 aiofiles
+pytest

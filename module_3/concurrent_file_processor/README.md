@@ -15,54 +15,127 @@
 
 ## Description
 
-Build a Concurrent File Processor that downloads files from URLs, processes them (image resize, text analysis, data conversion), and saves results. You'll implement three versions: sequential, threaded (for I/O-bound tasks), and multiprocessed (for CPU-bound tasks). Learn thread synchronization using locks and queues. Use concurrent.futures for clean concurrent code. Add a simple asyncio version for comparison. Measure and compare performance across approaches.
+Build a Concurrent File Processor that downloads files from URLs, processes them (image resize, text analysis, data conversion), and saves results. You'll implement four versions: sequential, threaded (for I/O-bound tasks), multiprocessed (for CPU-bound tasks), and async. Learn thread synchronization using locks and queues. Use concurrent.futures for clean concurrent code. Measure and compare performance across approaches.
 
-## Implementation Details
+## Installation
 
-### 1. Threading with threading Module
+```bash
+pip install -r requirements.txt
+```
 
-- Create worker threads for file downloads
-- Use Lock to protect shared state (progress counter)
-- Use Queue for distributing work to threads
-- Implement thread-safe logging
-- Understand GIL limitations for CPU-bound work
+## Usage
 
-### 2. Thread Synchronization
+### Generate Test Dataset
 
-- Use Lock for critical sections
-- Use Semaphore to limit concurrent operations
-- Use Event for signaling between threads
-- Demonstrate race conditions without locks (for learning)
+```bash
+python -m src.main --generate-dataset --num-images 10 --num-texts 10
+```
 
-### 3. concurrent.futures
+### Run Individual Modes
 
-- Implement ThreadPoolExecutor for I/O-bound file downloads
-- Implement ProcessPoolExecutor for CPU-bound image processing
-- Use `as_completed()` and `map()` patterns
-- Handle exceptions in worker threads/processes
+**Sequential (Baseline)**
 
-### 4. Multiprocessing
+```bash
+python -m src.main --mode sequential
+```
 
-- Use `multiprocessing.Pool` for parallel CPU work
-- Share data using Queue or Manager
-- Understand when multiprocessing beats threading
+**Threading**
 
-### 5. Basic asyncio Introduction
+```bash
+python -m src.main --mode threading
+```
 
-- Convert download logic to async/await pattern
-- Create simple event loop
-- Use `asyncio.gather()` for concurrent downloads
-- Compare with threading approach
+**Multiprocessing**
 
-### 6. Performance Measurement
+```bash
+python -m src.main --mode multiprocessing
+```
 
-- Time each approach for different workloads
-- Plot results showing threading vs. multiprocessing trade-offs
-- Document GIL impact
+**Async**
+
+```bash
+python -m src.main --mode async
+```
+
+### Run All Modes and Generate Comparison Report
+
+```bash
+python -m src.main --compare --generate-dataset
+```
+
+This will:
+
+1. Generate a test dataset
+2. Run all four processing modes
+3. Generate a detailed performance comparison report
+4. Save results to `data/processed/performance_report.txt`
+
+## Running Tests
+
+```bash
+pytest tests/ -v
+```
+
+## Project Structure
+
+```
+concurrent_file_processor/
+├── src/
+│   ├── __init__.py
+│   ├── main.py                      # CLI entry point
+│   ├── utils.py                     # Logging, timing utilities
+│   ├── dataset_generator.py         # Test dataset creation
+│   ├── file_downloader.py           # File download logic
+│   ├── file_processor.py            # Image/text processing
+│   ├── sequential_processor.py      # Sequential baseline
+│   ├── threading_processor.py       # Threading with Lock, Queue
+│   ├── multiprocessing_processor.py # Multiprocessing with Pool
+│   ├── async_processor.py           # Asyncio implementation
+│   └── performance_comparison.py    # Benchmarking & reporting
+├── tests/
+│   ├── __init__.py
+│   └── test_processors.py           # Unit tests
+├── data/
+│   ├── test_dataset/                # Generated test files
+│   └── processed/                   # Processed output
+├── requirements.txt
+└── README.md
+```
+
+## Key Concepts Demonstrated
+
+### Threading
+
+- **ThreadSafeCounter**: Lock-based thread-safe counter
+- **Queue**: Thread-safe task distribution
+- **ThreadPoolExecutor**: High-level threading interface
+- **Manual Threads**: Low-level thread management
+
+### Multiprocessing
+
+- **ProcessPoolExecutor**: High-level multiprocessing interface
+- **Pool**: Classic multiprocessing pool
+- **GIL Bypass**: True parallelism for CPU-bound tasks
+
+### Asyncio
+
+- **async/await**: Asynchronous programming
+- **aiohttp**: Async HTTP requests
+- **asyncio.gather**: Concurrent task execution
+- **run_in_executor**: Running CPU-bound tasks in async context
+
+## Performance Insights
+
+The comparison report will show:
+
+- **Sequential**: Baseline performance
+- **Threading**: Best for I/O-bound tasks (limited by GIL for CPU work)
+- **Multiprocessing**: Best for CPU-bound tasks (bypasses GIL)
+- **Async**: Best for high-concurrency I/O operations
 
 ## Milestones
 
-- **Day 1–2: Sequential Baseline**: Implement sequential file processor, Measure baseline performance, Prepare test dataset (20+ files)
-- **Day 3–5: Threading Implementation**: Add threading with Queue, Implement locks for thread safety, Use ThreadPoolExecutor
-- **Day 6–7: Multiprocessing**: Implement ProcessPoolExecutor version, Compare threading vs. multiprocessing performance, Document GIL observations
-- **Day 8–9: Basic asyncio & Testing**: Create simple asyncio download version, Write tests for thread safety, Generate performance comparison report
+- **Day 1–2: Sequential Baseline**: ✅ Completed
+- **Day 3–5: Threading Implementation**: ✅ Completed
+- **Day 6–7: Multiprocessing**: ✅ Completed
+- **Day 8–9: Basic asyncio & Testing**: ✅ Completed
