@@ -44,5 +44,8 @@ CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_followers_followed_id ON followers(followed_id);
 CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id);
 
--- Composite index for feed generation performance (follower_id + created_at via posts join)
--- This will be optimized further in Day 4
+-- GIN index for JSONB metadata optimization
+CREATE INDEX IF NOT EXISTS idx_posts_metadata_gin ON posts USING GIN (metadata);
+
+-- Composite index for feed generation performance (added in optimization phase)
+CREATE INDEX IF NOT EXISTS idx_posts_composite_user_date ON posts(user_id, created_at DESC);
