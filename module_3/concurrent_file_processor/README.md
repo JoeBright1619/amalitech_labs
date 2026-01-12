@@ -19,6 +19,14 @@ Build a Concurrent File Processor that downloads files from URLs, processes them
 
 ## Installation
 
+### Using Poetry (Recommended)
+
+```bash
+poetry install
+```
+
+### Using pip
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -28,6 +36,10 @@ pip install -r requirements.txt
 ### Generate Test Dataset
 
 ```bash
+# Using Poetry
+poetry run python -m src.main --generate-dataset --num-images 10 --num-texts 10
+
+# Or using pip
 python -m src.main --generate-dataset --num-images 10 --num-texts 10
 ```
 
@@ -60,7 +72,7 @@ python -m src.main --mode async
 ### Run All Modes and Generate Comparison Report
 
 ```bash
-python -m src.main --compare --generate-dataset
+poetry run python -m src.main --compare --generate-dataset
 ```
 
 This will:
@@ -73,6 +85,10 @@ This will:
 ## Running Tests
 
 ```bash
+# Using Poetry
+poetry run pytest tests/ -v
+
+# Or using pip
 pytest tests/ -v
 ```
 
@@ -132,10 +148,3 @@ The comparison report will show:
 - **Threading**: Best for I/O-bound tasks (limited by GIL for CPU work)
 - **Multiprocessing**: Best for CPU-bound tasks (bypasses GIL)
 - **Async**: Best for high-concurrency I/O operations
-
-## Milestones
-
-- **Day 1–2: Sequential Baseline**: ✅ Completed
-- **Day 3–5: Threading Implementation**: ✅ Completed
-- **Day 6–7: Multiprocessing**: ✅ Completed
-- **Day 8–9: Basic asyncio & Testing**: ✅ Completed

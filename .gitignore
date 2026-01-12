@@ -41,3 +41,6 @@ Thumbs.db
 .env.local
 
 documents/
+
+module_3/concurrent_file_processor/data/processed/      
+module_3/concurrent_file_processor/data/test_dataset/ 
