@@ -6,7 +6,7 @@ authors = [
     {name = "JoeBright1619"}
 ]
 readme = "README.md"
-requires-python = "^3.11"
+requires-python = ">=3.11"
 dependencies = [
     "psycopg2-binary (>=2.9.11,<3.0.0)",
     "pymongo (>=4.16.0,<5.0.0)",

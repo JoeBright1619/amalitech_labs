@@ -28,16 +28,9 @@ Build the data backend for a social media platform. You will design a normalized
   - **MongoDB**: Store unstructured activity stream data (e.g., "User A liked Post B").
 - **Complex Queries & Performance**:
   - Write a query with CTEs and JOINs to generate a user's timeline (posts from people they follow).
-  - Use a window function (`ROW_NUMBER()`) to paginate the timeline results efficiently.
+  - Use a window function (`ROW_NUMBER()`) for stable pagination.
   - Use `EXPLAIN ANALYZE` to diagnose the performance of the feed generation query.
   - Add composite B-tree indexes (e.g., on the followers table) to drastically improve performance.
-
-## Milestones
-
-- **Day 1**: Database Schema Design and Setup.
-- **Day 2**: Implementing Core User Actions with Python and Transactions.
-- **Day 3**: Integrating Redis for Caching and MongoDB for Logging.
-- **Day 4**: Building and Optimizing the Feed Generation Query.
 
 ## Grading Criteria
 
