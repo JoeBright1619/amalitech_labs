@@ -1,5 +1,5 @@
 import os
-import psycopg2
+from psycopg2 import pool
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,7 +12,7 @@ class DatabaseManager:
     def initialize_pool(cls):
         if cls._pool is None:
             try:
-                cls._pool = psycopg2.pool.SimpleConnectionPool(
+                cls._pool = pool.SimpleConnectionPool(
                     1,
                     10,
                     user=os.getenv("DB_USER"),
