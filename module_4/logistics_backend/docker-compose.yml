@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   postgres:
@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: logistics_db
     ports:
-      - "5432:5432"
+      - "5434:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
@@ -20,7 +20,7 @@ services:
     container_name: logistics_redis
     restart: always
     ports:
-      - "6379:6379"
+      - "6381:6379"
 
   mongodb:
     image: mongo:latest
@@ -30,7 +30,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: rootpassword
     ports:
-      - "27017:27017"
+      - "27019:27017"
     volumes:
       - mongo_data:/data/db
 
