@@ -1,0 +1,20 @@
+[project]
+name = "logistics-backend"
+version = "0.1.0"
+description = "Logistics and Shipment Tracking Backend"
+authors = [
+    {name = "JoeBright1619"}
+]
+readme = "README.md"
+requires-python = "^3.11"
+dependencies = [
+    "psycopg2-binary (>=2.9.11,<3.0.0)",
+    "redis (>=7.1.0,<8.0.0)",
+    "pymongo (>=4.16.0,<5.0.0)",
+    "python-dotenv (>=1.2.1,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
