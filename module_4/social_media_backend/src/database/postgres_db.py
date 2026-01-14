@@ -1,5 +1,6 @@
 import os
 import psycopg2
+from psycopg2 import pool
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -17,7 +18,7 @@ class PostgresDB:
 
     def _initialize_pool(self):
         try:
-            self._pool = psycopg2.pool.SimpleConnectionPool(
+            self._pool = pool.SimpleConnectionPool(
                 1,
                 10,
                 user=os.getenv("PG_USER"),

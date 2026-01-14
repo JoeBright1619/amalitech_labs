@@ -18,45 +18,7 @@ This project implements a robust, hybrid data backend for a social media platfor
 
 The following diagram illustrates the relationship between our 3NF normalized tables:
 
-```mermaid
-erDiagram
-    USERS ||--o{ POSTS : creates
-    USERS ||--o{ COMMENTS : writes
-    USERS ||--o{ FOLLOWERS : "is follower"
-    USERS ||--o{ FOLLOWERS : "is followed"
-    POSTS ||--o{ COMMENTS : "contains"
-
-    USERS {
-        uuid id PK
-        string username
-        string email
-        int following_count
-        int followers_count
-        timestamp created_at
-    }
-
-    POSTS {
-        uuid id PK
-        uuid user_id FK
-        text content
-        jsonb metadata
-        timestamp created_at
-    }
-
-    COMMENTS {
-        uuid id PK
-        uuid post_id FK
-        uuid user_id FK
-        text content
-        timestamp created_at
-    }
-
-    FOLLOWERS {
-        uuid follower_id PK, FK
-        uuid followed_id PK, FK
-        timestamp created_at
-    }
-```
+![ER Diagram](docs/entity_relationship.png)
 
 ---
 
