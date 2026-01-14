@@ -81,4 +81,23 @@ The PostgreSQL database follows the **Third Normal Form (3NF)**:
 
 ## Performance Tuning Report
 
-_(To be updated after Milestone 4)_
+### Optimization Strategy
+
+To optimize the history reconstruction query (which uses expensive `LAG()` window functions), we analyzed the query plan and identified a sequential scan on `tracking_events`.
+
+**Solution**: Created a composite B-tree index on `(package_id, event_timestamp)`.
+
+### Benchmark Results
+
+- **Before Optimization**:
+
+  - Scan Type: Sequential Scan on `tracking_events`
+  - Execution Time: ~4.0 ms
+  - Cost: ~9.58
+
+- **After Optimization**:
+  - Scan Type: Index Scan using `idx_tracking_composite`
+  - Execution Time: ~0.3 ms
+  - Cost: ~1.04
+
+**Conclusion**: The composite index significantly improved query performance by allowing the database to efficiently locate events for a specific package and traverse them in chronological order without sorting.
