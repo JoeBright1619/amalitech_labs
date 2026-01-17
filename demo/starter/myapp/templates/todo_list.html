@@ -1,0 +1,28 @@
+<!-- templates/todo_list.html -->
+{% extends "base.html" %}
+
+{% block title %}My Todos{% endblock %}
+
+{% block content %}
+
+<a href="{% url 'todo-create'%}" class="btn">+ Add Todo</a>
+<br><br>
+
+<ul>
+    {% for todo in todo_items %}
+        <li>
+            {% if todo.completed %}
+                <s>{{ todo.title }}</s>
+            {% else %}
+                {{ todo.title }}
+            {% endif %}
+
+            <a href="">✏️</a>
+            <a href="" class="btn btn-danger">🗑</a>
+        </li>
+    {% empty %}
+        <p>No todos yet.</p>
+    {% endfor %}
+</ul>
+
+{% endblock %}

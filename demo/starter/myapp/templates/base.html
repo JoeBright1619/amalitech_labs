@@ -1,0 +1,43 @@
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Todo App{% endblock %}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 6px;
+        }
+        a {
+            text-decoration: none;
+        }
+        .btn {
+            padding: 6px 10px;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Todo App</h1>
+        <hr>
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

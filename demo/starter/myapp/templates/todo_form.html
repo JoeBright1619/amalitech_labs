@@ -1,0 +1,23 @@
+<!-- templates/todo_form.html -->
+{% extends "base.html" %}
+
+{% block title %}Todo Form{% endblock %}
+
+{% block content %}
+
+<form method="POST">
+    {% csrf_token %}
+
+    <label>Title:</label><br>
+    <input type="text" name="title" value="{{ todo.title|default:'' }}" required><br>
+    <label>Description:</label><br>
+    <input type="text" name="description" value="{{ todo.description|default:'' }}" required>
+    <br><br>
+
+    
+    <br><br>
+
+    <button type="submit" class="btn">Save</button>
+</form>
+
+{% endblock %}
