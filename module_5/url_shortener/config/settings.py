@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_spectacular",
     # Local
-    # 'shortener', # Will be added in Milestone 2
+    "shortener",
 ]
 
 MIDDLEWARE = [
