@@ -1,20 +1,34 @@
+import redis
+from django.conf import settings
 from .interfaces import IUrlRepository
-from typing import Optional, Dict
+from typing import Optional
 
 
 class RedisUrlRepository(IUrlRepository):
     """
-    Temporary In-Memory implementation for Milestone 3.
-    Will be replaced with actual Redis implementation in Milestone 4.
+    Redis-backed implementation of the URL repository.
     """
 
-    _storage: Dict[str, str] = {}
+    def __init__(self):
+        # Establish connection using the REDIS_URL from settings
+        # decode_responses=True ensures we get strings back instead of bytes
+        self.client = redis.Redis.from_url(settings.REDIS_URL, decode_responses=True)
 
     def save_mapping(self, short_code: str, original_url: str) -> None:
-        self._storage[short_code] = original_url
+        """
+        Save the mapping to Redis.
+        Key: short_code, Value: original_url
+        """
+        self.client.set(short_code, original_url)
 
     def get_original_url(self, short_code: str) -> Optional[str]:
-        return self._storage.get(short_code)
+        """
+        Retrieve original URL from Redis.
+        """
+        return self.client.get(short_code)
 
     def exists(self, short_code: str) -> bool:
-        return short_code in self._storage
+        """
+        Check if the short code exists in Redis.
+        """
+        return bool(self.client.exists(short_code))
