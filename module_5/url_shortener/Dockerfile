@@ -1,6 +1,9 @@
 
 # Stage 1: Builder
-FROM python:3.11-slim-buster as builder
+FROM python:3.12-slim-bookworm as builder
+
+
+ENV POETRY_VERSION=2.1.1
 
 WORKDIR /app
 
@@ -13,19 +16,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry
-RUN pip install "poetry==1.7.0"
+RUN pip install --no-cache-dir "poetry==$POETRY_VERSION"
 
 # Copy only requirements to cache them in docker layer
 COPY pyproject.toml poetry.lock ./
 
-# Export requirements to requirements.txt (to avoid installing poetry in final image if desired, or just use poetry)
-# Here we will just use poetry to install in a virtualenv or system wide
-# Let's install dependencies into the system python for simplicity in the final stage or use a venv
+
 RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi --no-root
 
 # Stage 2: Final
-FROM python:3.11-slim-buster
+FROM python:3.12-slim-bookworm
+
 
 WORKDIR /app
 
@@ -33,8 +35,8 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /usr/local /usr/local
+
 
 COPY . .
 

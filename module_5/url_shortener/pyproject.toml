@@ -1,21 +1,23 @@
-[project]
+[tool.poetry]
 name = "url-shortener"
 version = "0.1.0"
 description = "URL Shortener Microservice"
-authors = [
-    {name = "Bright",email = "brightcollin1619@google.com"}
-]
+authors = ["Bright <brightcollin1619@google.com>"]
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = [
-    "django (>=6.0.1,<7.0.0)",
-    "djangorestframework (>=3.16.1,<4.0.0)",
-    "redis (>=7.1.0,<8.0.0)",
-    "python-decouple (>=3.8,<4.0)",
-    "drf-spectacular (>=0.29.0,<0.30.0)",
-    "gunicorn (>=24.1.1,<25.0.0)"
-]
 
+[tool.poetry.dependencies]
+python = "^3.12"
+django = "^6.0.1"
+djangorestframework = "^3.16.1"
+redis = "^7.1.0"
+python-decouple = "^3.8"
+drf-spectacular = "^0.29.0"
+gunicorn = "^24.1.1"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.0"
+isort = "^5.13"
+pytest = "^8.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
