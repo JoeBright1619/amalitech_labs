@@ -81,8 +81,12 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": config("DB_NAME", default="shortener_db"),
+        "USER": config("DB_USER", default="shortener_user"),
+        "PASSWORD": config("DB_PASSWORD", default="shortener_password"),
+        "HOST": config("DB_HOST", default="db"),
+        "PORT": config("DB_PORT", default="5432"),
     }
 }
 
@@ -105,6 +109,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+
+# Custom User Model
+AUTH_USER_MODEL = "shortener.User"
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
@@ -131,6 +138,17 @@ REST_FRAMEWORK = {
 
 # Redis Configuration
 REDIS_URL = config("REDIS_URL", default="redis://localhost:6379/0")
+
+# Cache Configuration
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
 
 LOGGING = {
     "version": 1,

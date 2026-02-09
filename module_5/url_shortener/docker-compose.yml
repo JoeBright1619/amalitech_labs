@@ -12,13 +12,30 @@ services:
       - DEBUG=True
       - SECRET_KEY=dev_secret_key
       - REDIS_URL=redis://redis:6379/0
+      - DB_HOST=db
+      - DB_NAME=shortener_db
+      - DB_USER=shortener_user
+      - DB_PASSWORD=shortener_password
     depends_on:
       - redis
+      - db
 
   redis:
     image: "redis:alpine"
     volumes:
       - redis_data:/data
 
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=shortener_db
+      - POSTGRES_USER=shortener_user
+      - POSTGRES_PASSWORD=shortener_password
+    ports:
+      - "5432:5432"
+
 volumes:
   redis_data:
+  postgres_data:

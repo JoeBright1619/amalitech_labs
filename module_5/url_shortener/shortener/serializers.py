@@ -13,3 +13,9 @@ class ShortenUrlSerializer(serializers.Serializer):
             "required": "URL field is required.",
         },
     )
+    custom_alias = serializers.CharField(
+        required=False,
+        allow_null=True,
+        max_length=10,
+        help_text="Optional custom alias for premium users.",
+    )
