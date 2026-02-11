@@ -136,6 +136,13 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "core.exceptions.custom_exception_handler",
 }
 
+SPECTACULAR_SETTINGS = {
+    "TITLE": "AmaliTech URL Shortener API",
+    "DESCRIPTION": "Module 6: Advanced URL Shortener with User Ownership, Analytics, and Data Engineering features.",
+    "VERSION": "2.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
+
 # Redis Configuration
 REDIS_URL = config("REDIS_URL", default="redis://localhost:6379/0")
 

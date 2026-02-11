@@ -95,6 +95,20 @@ class URL(models.Model):
     def __str__(self):
         return f"{self.short_code} -> {self.original_url}"
 
+    @property
+    def is_expired(self):
+        """Checks if the URL has passed its expiration date."""
+        if self.expires_at:
+            from django.utils import timezone
+
+            return timezone.now() > self.expires_at
+        return False
+
+    @property
+    def is_valid(self):
+        """Checks if the URL is active and not expired."""
+        return self.is_active and not self.is_expired
+
     def clicks_per_country(self):
         """
         Returns a list of dicts with country and total clicks.

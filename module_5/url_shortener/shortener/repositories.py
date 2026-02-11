@@ -4,7 +4,7 @@ from .interfaces import IUrlRepository
 from typing import Optional
 
 
-from .models import URL, Click
+from .models import URL, Click, Tag
 
 
 class RedisUrlRepository(IUrlRepository):
@@ -17,7 +17,9 @@ class RedisUrlRepository(IUrlRepository):
         # decode_responses=True ensures we get strings back instead of bytes
         self.client = redis.Redis.from_url(settings.REDIS_URL, decode_responses=True)
 
-    def save_mapping(self, short_code: str, original_url: str, user=None) -> None:
+    def save_mapping(
+        self, short_code: str, original_url: str, user=None, **kwargs
+    ) -> None:
         """
         Save the mapping to Redis.
         Key: short_code, Value: original_url
@@ -50,15 +52,29 @@ class ORMUrlRepository(IUrlRepository):
     Django ORM-backed implementation of the URL repository.
     """
 
-    def save_mapping(self, short_code: str, original_url: str, user=None) -> None:
+    def save_mapping(
+        self, short_code: str, original_url: str, user=None, **kwargs
+    ) -> None:
         """
         Save the mapping to the Database.
         """
-        URL.objects.create(
+        url_obj = URL.objects.create(
             short_code=short_code,
             original_url=original_url,
-            owner=user,  # Assuming user is passed, handle None if necessary or enforcing in service
+            owner=user,
+            title=kwargs.get("title"),
+            description=kwargs.get("description"),
+            favicon=kwargs.get("favicon"),
+            expires_at=kwargs.get("expires_at"),
+            custom_alias=kwargs.get("custom_alias"),
         )
+
+        # Handle tags
+        tags = kwargs.get("tags", [])
+        if tags:
+            for tag_name in tags:
+                tag, _ = Tag.objects.get_or_create(name=tag_name)
+                url_obj.tags.add(tag)
 
     def get_original_url(self, short_code: str) -> Optional[str]:
         """

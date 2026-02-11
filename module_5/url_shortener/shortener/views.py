@@ -2,10 +2,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import redirect
-from drf_spectacular.utils import extend_schema, OpenApiExample
-from .serializers import ShortenUrlSerializer
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
+from .serializers import ShortenUrlSerializer, URLDetailSerializer
+from rest_framework.permissions import IsAuthenticated
 from .services import UrlShortenerService
 from .repositories import ORMUrlRepository
+from .models import URL
 
 
 class ShortenUrlView(APIView):
@@ -14,6 +16,7 @@ class ShortenUrlView(APIView):
     """
 
     serializer_class = ShortenUrlSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_service(self):
         repo = ORMUrlRepository()
@@ -30,13 +33,24 @@ class ShortenUrlView(APIView):
                 },
             )
         },
-        description="Submit a long URL to get a shortened code.",
+        description="Submit a long URL to get a shortened code. Supports custom aliases and tags for categorization.",
         examples=[
             OpenApiExample(
-                "Valid Example",
+                "Basic Usage",
                 value={"url": "https://www.google.com"},
                 request_only=True,
-            )
+            ),
+            OpenApiExample(
+                "Custom Alias & Tags",
+                value={
+                    "url": "https://www.google.com",
+                    "custom_alias": "google-home",
+                    "tags": ["Search", "Main"],
+                    "title": "Google Search",
+                    "description": "Primary search engine",
+                },
+                request_only=True,
+            ),
         ],
     )
     def post(self, request):
@@ -49,8 +63,16 @@ class ShortenUrlView(APIView):
             service = self.get_service()
 
             try:
+                # Collect all optional fields
                 short_code = service.shorten_url(
-                    original_url, user=user, custom_alias=custom_alias
+                    original_url,
+                    user=user,
+                    custom_alias=custom_alias,
+                    tags=serializer.validated_data.get("tags"),
+                    title=serializer.validated_data.get("title"),
+                    description=serializer.validated_data.get("description"),
+                    favicon=serializer.validated_data.get("favicon"),
+                    expires_at=serializer.validated_data.get("expires_at"),
                 )
                 full_short_url = request.build_absolute_uri(f"/{short_code}/")
 
@@ -92,13 +114,38 @@ class RedirectView(APIView):
     def get(self, request, short_code):
         service = self.get_service()
 
+        # Simple mock IP intelligence for demonstration
+        ip = self.get_client_ip(request)
+        country = (
+            "US"
+            if ip and ip.startswith("192.")
+            else "GH" if ip and ip.startswith("127.") else "UK"
+        )
+
         click_data = {
-            "ip_address": self.get_client_ip(request),
+            "ip_address": ip,
             "user_agent": request.META.get("HTTP_USER_AGENT"),
             "referrer": request.META.get("HTTP_REFERER"),
-            "city": None,  # Requires GeoIP integration or similar service
-            "country": None,
+            "city": (
+                "Accra"
+                if country == "GH"
+                else "London" if country == "UK" else "New York"
+            ),
+            "country": country,
         }
+
+        # Retrieve URL object for validity check
+        try:
+            url_obj = URL.objects.get(short_code=short_code)
+            if not url_obj.is_valid:
+                error_msg = (
+                    "URL has expired" if url_obj.is_expired else "URL is inactive"
+                )
+                return Response({"error": error_msg}, status=status.HTTP_410_GONE)
+        except URL.DoesNotExist:
+            return Response(
+                {"error": "Short code not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         original_url = service.get_original_url(short_code, click_data=click_data)
 
@@ -108,3 +155,62 @@ class RedirectView(APIView):
         return Response(
             {"error": "Short code not found"}, status=status.HTTP_404_NOT_FOUND
         )
+
+
+class UserUrlListView(APIView):
+    """
+    API View to list URLs owned by the authenticated user.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        description="List all shortened URLs owned by the authenticated user.",
+        responses={200: URLDetailSerializer(many=True)},
+    )
+    def get(self, request):
+        # Optimized query using the manager method we defined earlier
+        urls = URL.objects.filter(owner=request.user).with_details()
+        serializer = URLDetailSerializer(urls, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UrlAnalyticsView(APIView):
+    """
+    API View to retrieve analytics for a shortened URL.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        description="Get click statistics per country for a given short code. Only accessible by the owner.",
+        responses={
+            200: OpenApiExample(
+                "Success",
+                value=[
+                    {"country": "US", "total_clicks": 150},
+                    {"country": "UK", "total_clicks": 85},
+                    {"country": None, "total_clicks": 20},
+                ],
+            ),
+            404: OpenApiResponse(description="Short code not found"),
+        },
+    )
+    def get(self, request, short_code):
+        try:
+            url_obj = URL.objects.get(short_code=short_code)
+
+            # Authorization check
+            if url_obj.owner != request.user:
+                return Response(
+                    {"error": "You do not have permission to view these analytics."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            # Use the optimized aggregation method in the model
+            stats = url_obj.clicks_per_country()
+            return Response(stats, status=status.HTTP_200_OK)
+        except URL.DoesNotExist:
+            return Response(
+                {"error": "Short code not found"}, status=status.HTTP_404_NOT_FOUND
+            )

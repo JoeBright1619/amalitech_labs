@@ -20,11 +20,12 @@ class UrlShortenerService:
         self.CHAR_SET = string.ascii_letters + string.digits
 
     def shorten_url(
-        self, original_url: str, user=None, custom_alias: str = None
+        self, original_url: str, user=None, custom_alias: str = None, **kwargs
     ) -> str:
         """
         Generates a unique short code for the given URL and saves the mapping.
         If custom_alias is provided, verifies it's available.
+        Additional metadata can be passed via kwargs.
         """
 
         if custom_alias:
@@ -38,7 +39,7 @@ class UrlShortenerService:
             while self.repository.exists(short_code):
                 short_code = self._generate_random_code()
 
-        self.repository.save_mapping(short_code, original_url, user=user)
+        self.repository.save_mapping(short_code, original_url, user=user, **kwargs)
         return short_code
 
     def get_original_url(self, short_code: str, click_data: dict = None) -> str:
