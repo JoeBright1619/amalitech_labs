@@ -16,6 +16,7 @@ services:
       - DB_NAME=shortener_db
       - DB_USER=shortener_user
       - DB_PASSWORD=shortener_password
+      - DB_PORT=5432
     depends_on:
       - redis
       - db
@@ -34,7 +35,7 @@ services:
       - POSTGRES_USER=shortener_user
       - POSTGRES_PASSWORD=shortener_password
     ports:
-      - "5432:5432"
+      - "5435:5432"
 
 volumes:
   redis_data:
