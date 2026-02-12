@@ -43,16 +43,15 @@ class Tag(models.Model):
         return self.name
 
 
-class URLManager(models.Manager):
+class URLQuerySet(models.QuerySet):
     """
-    Custom manager for URL model with business logic methods.
+    Custom QuerySet for URL model with business logic methods.
     """
 
     def active_urls(self):
         return self.filter(is_active=True)
 
     def expired_urls(self):
-        # Assuming we want URLs that HAVE an expiration date and that date is in the past
         from django.utils import timezone
 
         return self.filter(expires_at__lt=timezone.now())
@@ -62,6 +61,14 @@ class URLManager(models.Manager):
 
     def with_details(self):
         return self.select_related("owner").prefetch_related("tags")
+
+
+class URLManager(models.Manager.from_queryset(URLQuerySet)):
+    """
+    Custom manager for URL model.
+    """
+
+    pass
 
 
 class URL(models.Model):

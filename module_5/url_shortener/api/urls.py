@@ -1,13 +1,29 @@
 from django.urls import path
-from .views import ShortenUrlView, RedirectView, UrlAnalyticsView, UserUrlListView
+from rest_framework_simplejwt.views import TokenRefreshView
+from .views import (
+    ShortenUrlView,
+    RedirectView,
+    UrlAnalyticsView,
+    UserUrlListView,
+    UrlDetailView,
+)
+from .auth_views import RegisterView, LoginView
 
 urlpatterns = [
+    path("auth/register/", RegisterView.as_view(), name="register"),
+    path("auth/login/", LoginView.as_view(), name="login"),
+    path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("shorten/", ShortenUrlView.as_view(), name="shorten_url"),
     path("my-urls/", UserUrlListView.as_view(), name="user_urls"),
     path(
         "analytics/<str:short_code>/",
         UrlAnalyticsView.as_view(),
         name="url_analytics",
+    ),
+    path(
+        "urls/<str:short_code>/",
+        UrlDetailView.as_view(),
+        name="url_detail",
     ),
     path("r/<str:short_code>/", RedirectView.as_view(), name="redirect_url_api"),
 ]
