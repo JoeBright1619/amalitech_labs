@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 from decouple import config, Csv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -42,11 +43,14 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_spectacular",
     # Local
+    "core",
     "shortener",
+    "api",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -81,8 +85,12 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": config("DB_NAME", default="shortener_db"),
+        "USER": config("DB_USER", default="shortener_user"),
+        "PASSWORD": config("DB_PASSWORD", default="shortener_password"),
+        "HOST": config("DB_HOST", default="db"),
+        "PORT": config("DB_PORT", default="5432"),
     }
 }
 
@@ -106,6 +114,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+# Custom User Model
+AUTH_USER_MODEL = "shortener.User"
+
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
@@ -121,16 +132,56 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en6.0/howto/static-files/
 
+
 STATIC_URL = "static/"
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Optional but recommended for production
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # DRF Settings
 REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "login": "5/min",
+    },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "core.exceptions.custom_exception_handler",
 }
 
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "AmaliTech URL Shortener API",
+    "DESCRIPTION": "Module 6: Advanced URL Shortener with User Ownership, Analytics, and Data Engineering features.",
+    "VERSION": "2.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
+
 # Redis Configuration
 REDIS_URL = config("REDIS_URL", default="redis://localhost:6379/0")
+
+# Cache Configuration
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
 
 LOGGING = {
     "version": 1,

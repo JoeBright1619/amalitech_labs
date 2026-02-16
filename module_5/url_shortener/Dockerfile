@@ -41,6 +41,6 @@ COPY --from=builder /usr/local /usr/local
 COPY . .
 
 # Collect static files (if needed, though this is an API)
-# RUN python manage.py collectstatic --noinput
+RUN python manage.py collectstatic --noinput
 
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]

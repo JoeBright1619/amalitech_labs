@@ -9,9 +9,13 @@ class IUrlRepository(ABC):
     """
 
     @abstractmethod
-    def save_mapping(self, short_code: str, original_url: str) -> None:
+    def save_mapping(
+        self, short_code: str, original_url: str, user=None, **kwargs
+    ) -> None:
         """
         Save a short code to original URL mapping.
+        Optional user argument for ownership.
+        Additional metadata can be passed via kwargs.
         """
         pass
 
@@ -27,5 +31,12 @@ class IUrlRepository(ABC):
     def exists(self, short_code: str) -> bool:
         """
         Check if a short code already exists.
+        """
+        pass
+
+    @abstractmethod
+    def log_click(self, short_code: str, click_data: dict) -> None:
+        """
+        Log a click for the given short code.
         """
         pass

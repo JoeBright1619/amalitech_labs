@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import URL, Tag
+from shortener.models import URL, Tag
 
 
 class ShortenUrlSerializer(serializers.Serializer):

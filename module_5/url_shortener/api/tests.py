@@ -5,12 +5,12 @@ from rest_framework import status
 from unittest.mock import patch
 
 
-class UrlShortenerTests(TestCase):
+class ApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.shorten_url = reverse("shorten_url")
 
-    @patch("shortener.views.UrlShortenerService")
+    @patch("api.views.UrlShortenerService")
     def test_shorten_url_success(self, mock_service_class):
         """
         Test that posting a valid URL returns a short code.
@@ -35,7 +35,7 @@ class UrlShortenerTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    @patch("shortener.views.UrlShortenerService")
+    @patch("api.views.UrlShortenerService")
     def test_redirect_success(self, mock_service_class):
         """
         Test that accessing a valid short code redirects to the original URL.
@@ -49,7 +49,7 @@ class UrlShortenerTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
         self.assertEqual(response.url, "https://www.example.com")
 
-    @patch("shortener.views.UrlShortenerService")
+    @patch("api.views.UrlShortenerService")
     def test_redirect_not_found(self, mock_service_class):
         """
         Test that accessing a non-existent short code returns 404.
