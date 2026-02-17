@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django.db.models import Count
+from core.models import TimeStampedModel
 
 
 class User(AbstractUser):
@@ -71,7 +72,7 @@ class URLManager(models.Manager.from_queryset(URLQuerySet)):
     pass
 
 
-class URL(models.Model):
+class URL(TimeStampedModel):
     """
     Model to store original and shortened URLs.
     """
@@ -89,8 +90,7 @@ class URL(models.Model):
     favicon = models.URLField(null=True, blank=True)
     click_count = models.PositiveIntegerField(default=0)
     tags = models.ManyToManyField(Tag, blank=True, related_name="urls")
-    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    # created_at and updated_at are inherited from TimeStampedModel
 
     objects = URLManager()
 

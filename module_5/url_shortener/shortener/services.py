@@ -46,13 +46,32 @@ class UrlShortenerService:
         """
         Retrieves the original URL and logs the click if found.
         Returns None if not found.
+        Raises ValueError if URL is expired or inactive.
         """
-        original_url = self.repository.get_original_url(short_code)
+        # We need the full object to check business rules
+        # ORM repository must implement get_url_by_code
+        if hasattr(self.repository, "get_url_by_code"):
+            url_obj = self.repository.get_url_by_code(short_code)
+        else:
+            # Fallback for Redis or other simple repos that haven't implemented this yet
+            # This logic assumes simple key-value store where we can't check expiry easily
+            return self.repository.get_original_url(short_code)
 
-        if original_url and click_data:
+        if not url_obj:
+            return None
+
+        # Business Logic: Check Expiry and Active Status
+        if not url_obj.is_active:
+            raise ValueError("URL is inactive")
+
+        if url_obj.is_expired:
+            raise ValueError("URL has expired")
+
+        # Log Click
+        if click_data:
             self.repository.log_click(short_code, click_data)
 
-        return original_url
+        return url_obj.original_url
 
     def _generate_random_code(self) -> str:
         """Helper to generate a random string."""

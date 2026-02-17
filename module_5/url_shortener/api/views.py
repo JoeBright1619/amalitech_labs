@@ -136,7 +136,7 @@ class RedirectView(APIView):
 
     @extend_schema(
         description="Redirect to the original URL based on the short code.",
-        responses={302: None, 404: dict},
+        responses={302: None, 404: dict, 410: dict},
     )
     def get(self, request, short_code):
         service = self.get_service()
@@ -161,20 +161,11 @@ class RedirectView(APIView):
             "country": country,
         }
 
-        # Retrieve URL object for validity check
         try:
-            url_obj = URL.objects.get(short_code=short_code)
-            if not url_obj.is_valid:
-                error_msg = (
-                    "URL has expired" if url_obj.is_expired else "URL is inactive"
-                )
-                return Response({"error": error_msg}, status=status.HTTP_410_GONE)
-        except URL.DoesNotExist:
-            return Response(
-                {"error": "Short code not found"}, status=status.HTTP_404_NOT_FOUND
-            )
-
-        original_url = service.get_original_url(short_code, click_data=click_data)
+            original_url = service.get_original_url(short_code, click_data=click_data)
+        except ValueError as e:
+            # Service raises ValueError for expired or inactive URLs
+            return Response({"error": str(e)}, status=status.HTTP_410_GONE)
 
         if original_url:
             return redirect(original_url)

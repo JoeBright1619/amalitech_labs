@@ -2,7 +2,6 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     ShortenUrlView,
-    RedirectView,
     UrlAnalyticsView,
     UserUrlListView,
     UrlDetailView,
@@ -25,5 +24,4 @@ urlpatterns = [
         UrlDetailView.as_view(),
         name="url_detail",
     ),
-    path("r/<str:short_code>/", RedirectView.as_view(), name="redirect_url_api"),
 ]
