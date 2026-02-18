@@ -42,7 +42,9 @@ class UrlShortenerService:
         self.repository.save_mapping(short_code, original_url, user=user, **kwargs)
         return short_code
 
-    def get_original_url(self, short_code: str, click_data: dict = None) -> str:
+    def get_original_url(
+        self, short_code: str, click_data: dict = None, log_click: bool = True
+    ) -> str:
         """
         Retrieves the original URL and logs the click if found.
         Returns None if not found.
@@ -68,7 +70,7 @@ class UrlShortenerService:
             raise ValueError("URL has expired")
 
         # Log Click
-        if click_data:
+        if click_data and log_click:
             self.repository.log_click(short_code, click_data)
 
         return url_obj.original_url

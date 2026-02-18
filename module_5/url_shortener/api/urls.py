@@ -7,6 +7,7 @@ from .views import (
     UrlDetailView,
 )
 from .auth_views import RegisterView, LoginView
+from .health_views import HealthCheckView
 
 urlpatterns = [
     path("auth/register/", RegisterView.as_view(), name="register"),
@@ -24,4 +25,5 @@ urlpatterns = [
         UrlDetailView.as_view(),
         name="url_detail",
     ),
+    path("health/", HealthCheckView.as_view(), name="health_check"),
 ]

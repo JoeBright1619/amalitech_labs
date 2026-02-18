@@ -139,7 +139,12 @@ class RedirectView(APIView):
         responses={302: None, 404: dict, 410: dict},
     )
     def get(self, request, short_code):
-        service = self.get_service()
+        from django.core.cache import cache
+        from shortener.tasks import track_click_task
+
+        # Check Cache first
+        # We store the original_url directly in cache
+        cached_url = cache.get(f"url:{short_code}")
 
         # Simple mock IP intelligence for demonstration
         ip = self.get_client_ip(request)
@@ -161,13 +166,46 @@ class RedirectView(APIView):
             "country": country,
         }
 
+        import logging
+
+        logger = logging.getLogger(__name__)
+        print(f"DEBUG: RedirectView hit for {short_code}")
+
+        if cached_url:
+            print(f"DEBUG: Cache HIT for {short_code}")
+            logger.info(f"Cache HIT for {short_code}")
+            # Trigger Async Analytics
+            try:
+                track_click_task.delay(short_code, click_data)
+            except Exception as e:
+                logger.error(f"Failed to trigger async task: {e}")
+            return redirect(cached_url)
+
+        # Cache Miss
+        service = self.get_service()
         try:
-            original_url = service.get_original_url(short_code, click_data=click_data)
+            # log_click=False because we will trigger the async task
+            original_url = service.get_original_url(
+                short_code, click_data=None, log_click=False
+            )
         except ValueError as e:
             # Service raises ValueError for expired or inactive URLs
             return Response({"error": str(e)}, status=status.HTTP_410_GONE)
 
         if original_url:
+            logger.info(f"Cache MISS for {short_code}. Caching and redirecting.")
+            # Cache the result for 15 minutes
+            try:
+                cache.set(f"url:{short_code}", original_url, timeout=60 * 15)
+            except Exception as e:
+                logger.error(f"Failed to set cache: {e}")
+
+            # Trigger Async Analytics
+            try:
+                track_click_task.delay(short_code, click_data)
+            except Exception as e:
+                logger.error(f"Failed to trigger async task: {e}")
+
             return redirect(original_url)
 
         return Response(

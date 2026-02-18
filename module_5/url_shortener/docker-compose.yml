@@ -25,7 +25,8 @@ services:
     image: "redis:alpine"
     volumes:
       - redis_data:/data
-
+    ports:
+      - "6379:6379"
   db:
     image: postgres:15-alpine
     volumes:
@@ -36,6 +37,42 @@ services:
       - POSTGRES_PASSWORD=shortener_password
     ports:
       - "5435:5432"
+
+  celery:
+    build: .
+    command: celery -A config worker -l info
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=dev_secret_key
+      - REDIS_URL=redis://redis:6379/0
+      - DB_HOST=db
+      - DB_NAME=shortener_db
+      - DB_USER=shortener_user
+      - DB_PASSWORD=shortener_password
+      - DB_PORT=5432
+    depends_on:
+      - redis
+      - db
+
+  celery-beat:
+    build: .
+    command: celery -A config beat -l info
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=dev_secret_key
+      - REDIS_URL=redis://redis:6379/0
+      - DB_HOST=db
+      - DB_NAME=shortener_db
+      - DB_USER=shortener_user
+      - DB_PASSWORD=shortener_password
+      - DB_PORT=5432
+    depends_on:
+      - redis
+      - db
 
 volumes:
   redis_data:
