@@ -2,12 +2,12 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     ShortenUrlView,
-    RedirectView,
     UrlAnalyticsView,
     UserUrlListView,
     UrlDetailView,
 )
 from .auth_views import RegisterView, LoginView
+from .health_views import HealthCheckView
 
 urlpatterns = [
     path("auth/register/", RegisterView.as_view(), name="register"),
@@ -25,5 +25,5 @@ urlpatterns = [
         UrlDetailView.as_view(),
         name="url_detail",
     ),
-    path("r/<str:short_code>/", RedirectView.as_view(), name="redirect_url_api"),
+    path("health/", HealthCheckView.as_view(), name="health_check"),
 ]

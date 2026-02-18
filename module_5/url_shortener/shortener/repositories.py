@@ -86,6 +86,15 @@ class ORMUrlRepository(IUrlRepository):
         except URL.DoesNotExist:
             return None
 
+    def get_url_by_code(self, short_code: str) -> Optional[URL]:
+        """
+        Retrieve URL object from Database.
+        """
+        try:
+            return URL.objects.get(short_code=short_code)
+        except URL.DoesNotExist:
+            return None
+
     def exists(self, short_code: str) -> bool:
         """
         Check if the short code exists in Database.

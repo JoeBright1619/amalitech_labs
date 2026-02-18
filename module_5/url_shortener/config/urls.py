@@ -5,6 +5,7 @@ URL configuration for config project.
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from api.views import RedirectView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -15,5 +16,6 @@ urlpatterns = [
         name="swagger-ui",
     ),
     path("api/", include("api.urls")),
-    path("", include("shortener.urls")),
+    # Root redirect handled by API view now
+    path("<str:short_code>/", RedirectView.as_view(), name="redirect_url"),
 ]

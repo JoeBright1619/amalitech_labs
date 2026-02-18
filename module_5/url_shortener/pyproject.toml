@@ -17,6 +17,7 @@ psycopg2-binary = "^2.9.11"
 django-redis = "^6.0.0"
 whitenoise = "^6.11.0"
 djangorestframework-simplejwt = "^5.5.0"
+celery = "^5.3.6"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.0"

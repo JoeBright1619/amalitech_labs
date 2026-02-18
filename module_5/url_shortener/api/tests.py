@@ -5,10 +5,17 @@ from rest_framework import status
 from unittest.mock import patch
 
 
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+
 class ApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.shorten_url = reverse("shorten_url")
+        self.user = User.objects.create_user(username="testuser", password="password")
+        self.client.force_authenticate(user=self.user)
 
     @patch("api.views.UrlShortenerService")
     def test_shorten_url_success(self, mock_service_class):
