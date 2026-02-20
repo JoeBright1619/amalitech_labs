@@ -17,6 +17,7 @@ services:
       - DB_USER=shortener_user
       - DB_PASSWORD=shortener_password
       - DB_PORT=5432
+      - PREVIEW_SERVICE_URL=http://preview-service:8001/preview/fetch/
     depends_on:
       - redis
       - db
@@ -38,6 +39,27 @@ services:
     ports:
       - "5435:5432"
 
+  preview-service:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8001
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8001"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=preview_service_secret
+      - REDIS_URL=redis://redis:6379/0
+      - DB_HOST=db
+      - DB_NAME=shortener_db
+      - DB_USER=shortener_user
+      - DB_PASSWORD=shortener_password
+      - DB_PORT=5432
+      - PREVIEW_SERVICE_URL=http://preview-service:8001/preview/fetch/
+    depends_on:
+      - redis
+      - db
+
   celery:
     build: .
     command: celery -A config worker -l info
@@ -52,6 +74,7 @@ services:
       - DB_USER=shortener_user
       - DB_PASSWORD=shortener_password
       - DB_PORT=5432
+      - PREVIEW_SERVICE_URL=http://preview-service:8001/preview/fetch/
     depends_on:
       - redis
       - db

@@ -18,6 +18,10 @@ django-redis = "^6.0.0"
 whitenoise = "^6.11.0"
 djangorestframework-simplejwt = "^5.5.0"
 celery = "^5.3.6"
+httpx = "^0.28.1"
+tenacity = "^9.1.4"
+beautifulsoup4 = "^4.14.3"
+django-cors-headers = "^4.9.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.0"

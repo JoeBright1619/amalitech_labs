@@ -15,7 +15,11 @@ urlpatterns = [
         SpectacularSwaggerView.as_view(url_name="schema"),
         name="swagger-ui",
     ),
-    path("api/", include("api.urls")),
+    path("api/v1/", include(("api.urls", "api"), namespace="v1")),
+    path(
+        "preview/",
+        include(("preview_service.urls", "preview_service"), namespace="preview"),
+    ),
     # Root redirect handled by API view now
     path("<str:short_code>/", RedirectView.as_view(), name="redirect_url"),
 ]

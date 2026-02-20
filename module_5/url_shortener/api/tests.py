@@ -13,25 +13,40 @@ User = get_user_model()
 class ApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.shorten_url = reverse("shorten_url")
+        self.shorten_url = reverse("v1:shorten_url")
         self.user = User.objects.create_user(username="testuser", password="password")
         self.client.force_authenticate(user=self.user)
 
     @patch("api.views.UrlShortenerService")
-    def test_shorten_url_success(self, mock_service_class):
+    @patch("api.views.fetch_url_preview_task.delay")
+    def test_shorten_url_success(self, mock_preview_delay, mock_service_class):
         """
-        Test that posting a valid URL returns a short code.
+        Test that posting a valid URL returns a short code and triggers preview task.
         """
         # Mocking the service instance and its method
         mock_service_instance = mock_service_class.return_value
         mock_service_instance.shorten_url.return_value = "TestCode"
 
-        data = {"url": "https://www.example.com"}
-        response = self.client.post(self.shorten_url, data, format="json")
+        # Mocking URL object return for views logic
+        from shortener.models import URL
 
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data["short_code"], "TestCode")
-        self.assertIn("/TestCode/", response.data["short_url"])
+        with patch("api.views.URL.objects.get") as mock_url_get:
+            mock_url_obj = URL(
+                id=1, short_code="TestCode", original_url="https://www.example.com"
+            )
+            mock_url_get.return_value = mock_url_obj
+
+            data = {"url": "https://www.example.com"}
+            response = self.client.post(self.shorten_url, data, format="json")
+
+            self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+            self.assertEqual(response.data["short_code"], "TestCode")
+            self.assertIn("/TestCode/", response.data["short_url"])
+
+            # Verify preview task was triggered
+            mock_preview_delay.assert_called_once_with(
+                mock_url_obj.id, "https://www.example.com"
+            )
 
     def test_shorten_url_invalid(self):
         """

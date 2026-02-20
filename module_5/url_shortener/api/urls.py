@@ -9,6 +9,8 @@ from .views import (
 from .auth_views import RegisterView, LoginView
 from .health_views import HealthCheckView
 
+app_name = "api"
+
 urlpatterns = [
     path("auth/register/", RegisterView.as_view(), name="register"),
     path("auth/login/", LoginView.as_view(), name="login"),

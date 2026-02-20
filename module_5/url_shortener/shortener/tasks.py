@@ -25,3 +25,25 @@ def archive_expired_urls_task():
     ).update(is_active=False)
 
     return f"Deactivated {updated_count} expired URLs"
+
+
+@shared_task(bind=True, max_retries=3)
+def fetch_url_preview_task(self, url_id: int, original_url: str):
+    """
+    Fetches title, description, favicon from the Preview Service
+    and saves them to the URL record.
+    """
+    from .preview_client import PreviewServiceClient
+
+    try:
+        client = PreviewServiceClient()
+        preview = client.fetch_preview(original_url)
+        URL.objects.filter(pk=url_id).update(
+            title=preview.get("title"),
+            description=preview.get("description"),
+            favicon=preview.get("favicon"),
+        )
+        return f"Preview fetched for URL ID {url_id}"
+    except Exception as exc:
+        # Retry with exponential backoff if something unexpected happens
+        raise self.retry(exc=exc, countdown=2**self.request.retries)

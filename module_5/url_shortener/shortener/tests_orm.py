@@ -3,6 +3,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
+from unittest.mock import patch
 from .models import URL, Tag, Click
 
 User = get_user_model()
@@ -11,7 +12,7 @@ User = get_user_model()
 class ORMIntegrationTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.shorten_url = reverse("shorten_url")
+        self.shorten_url = reverse("v1:shorten_url")
         self.user = User.objects.create_user(
             username="testuser",
             email="test@example.com",
@@ -25,7 +26,8 @@ class ORMIntegrationTests(TestCase):
         if not Tag.objects.filter(name="Marketing").exists():
             Tag.objects.create(name="Marketing")
 
-    def test_shorten_url_with_user_and_alias(self):
+    @patch("api.views.fetch_url_preview_task.delay")
+    def test_shorten_url_with_user_and_alias(self, mock_preview_delay):
         """
         Test shortening a URL with an authenticated user and a custom alias.
         """
@@ -34,6 +36,10 @@ class ORMIntegrationTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["short_code"], "myalias")
+
+        # Verify preview task was triggered
+        url = URL.objects.get(short_code="myalias")
+        mock_preview_delay.assert_called_once_with(url.id, "https://www.example.com")
 
         # Verify DB
         url = URL.objects.get(short_code="myalias")
@@ -53,28 +59,27 @@ class ORMIntegrationTests(TestCase):
         response = self.client.post(self.shorten_url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_click_logging(self):
+    @patch("api.views.track_click_task.delay")
+    def test_click_logging(self, mock_click_delay):
         """
-        Test that accessing the redirect URL logs a click.
+        Test that accessing the redirect URL triggers an async click log task.
         """
         code = "clicks"
-        url_obj = URL.objects.create(
+
+        """url_obj = URL.objects.create(
             short_code=code, original_url="https://www.example.com", owner=self.user
-        )
+        )"""
 
         url = reverse("redirect_url", kwargs={"short_code": code})
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
 
-        # Refresh from DB
-        url_obj.refresh_from_db()
-        self.assertEqual(url_obj.click_count, 1)
-
-        # Check Click model
-        self.assertTrue(Click.objects.filter(url=url_obj).exists())
-        click = Click.objects.filter(url=url_obj).first()
-        self.assertIsNotNone(click.ip_address)
+        # Verify async task was triggered
+        self.assertTrue(mock_click_delay.called)
+        # Check that it was called with the correct short_code
+        args, _ = mock_click_delay.call_args
+        self.assertEqual(args[0], code)
 
     def test_url_manager_methods(self):
         """

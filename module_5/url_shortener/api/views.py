@@ -10,6 +10,7 @@ from .serializers import ShortenUrlSerializer, URLDetailSerializer
 from shortener.services import UrlShortenerService
 from shortener.repositories import ORMUrlRepository
 from shortener.models import URL
+from shortener.tasks import fetch_url_preview_task, track_click_task
 
 
 class ShortenUrlView(APIView):
@@ -90,17 +91,19 @@ class ShortenUrlView(APIView):
             service = self.get_service()
 
             try:
-                # Collect all optional fields
+                # Collect all optional fields (excluding title/desc/favicon which are now auto-fetched)
                 short_code = service.shorten_url(
                     original_url,
                     user=user,
                     custom_alias=custom_alias,
                     tags=serializer.validated_data.get("tags"),
-                    title=serializer.validated_data.get("title"),
-                    description=serializer.validated_data.get("description"),
-                    favicon=serializer.validated_data.get("favicon"),
                     expires_at=serializer.validated_data.get("expires_at"),
                 )
+
+                # Trigger Async Preview Fetch
+                url_obj = URL.objects.get(short_code=short_code)
+                fetch_url_preview_task.delay(url_obj.id, original_url)
+
                 full_short_url = request.build_absolute_uri(f"/{short_code}/")
 
                 return Response(
@@ -140,7 +143,6 @@ class RedirectView(APIView):
     )
     def get(self, request, short_code):
         from django.core.cache import cache
-        from shortener.tasks import track_click_task
 
         # Check Cache first
         # We store the original_url directly in cache
