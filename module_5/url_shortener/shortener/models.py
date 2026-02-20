@@ -127,6 +127,23 @@ class URL(TimeStampedModel):
             .order_by("-total_clicks")
         )
 
+    def clicks_over_time(self, days=30):
+        """
+        Returns a list of dicts with date and total clicks for the last X days.
+        Example: [{'date': '2023-10-01', 'total_clicks': 5}, ...]
+        """
+        from django.utils import timezone
+        from django.db.models.functions import TruncDay
+
+        start_date = timezone.now() - timezone.timedelta(days=days)
+        return (
+            self.clicks.filter(clicked_at__gte=start_date)
+            .annotate(date=TruncDay("clicked_at"))
+            .values("date")
+            .annotate(total_clicks=Count("id"))
+            .order_by("date")
+        )
+
 
 class Click(models.Model):
     """

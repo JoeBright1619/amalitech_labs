@@ -1,8 +1,15 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.generics import GenericAPIView
+from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import redirect
-from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
+from drf_spectacular.utils import (
+    extend_schema,
+    OpenApiExample,
+    OpenApiResponse,
+    OpenApiParameter,
+)
 from rest_framework.permissions import IsAuthenticated
 from .permissions import IsOwnerOrReadOnly
 
@@ -13,13 +20,14 @@ from shortener.models import URL
 from shortener.tasks import fetch_url_preview_task, track_click_task
 
 
-class ShortenUrlView(APIView):
+class ShortenUrlView(GenericAPIView):
     """
-    API View to shorten a URL.
+    API View to list and create shortened URLs.
     """
 
     serializer_class = ShortenUrlSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = PageNumberPagination
 
     def get_service(self):
         repo = ORMUrlRepository()
@@ -119,6 +127,35 @@ class ShortenUrlView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @extend_schema(
+        description="List all shortened URLs owned by the authenticated user. Supports pagination and search by tag.",
+        responses={200: URLDetailSerializer(many=True)},
+        parameters=[
+            OpenApiParameter(
+                name="tag",
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description="Filter URLs by tag name.",
+            ),
+        ],
+    )
+    def get(self, request):
+        # Optimized query using the manager method we defined earlier
+        urls = URL.objects.filter(owner=request.user).with_details()
+
+        # Search by tag
+        tag_name = request.query_params.get("tag")
+        if tag_name:
+            urls = urls.filter(tags__name__iexact=tag_name)
+
+        page = self.paginate_queryset(urls)
+        if page is not None:
+            serializer = URLDetailSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = URLDetailSerializer(urls, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class RedirectView(APIView):
     """
@@ -215,25 +252,6 @@ class RedirectView(APIView):
         )
 
 
-class UserUrlListView(APIView):
-    """
-    API View to list URLs owned by the authenticated user.
-    """
-
-    permission_classes = [IsAuthenticated]
-
-    @extend_schema(
-        description="List all shortened URLs owned by the authenticated user.",
-        responses={200: URLDetailSerializer(many=True)},
-    )
-    def get(self, request):
-        # Optimized query using the manager method we defined earlier
-        print(URL.objects.filter(owner=request.user))
-        urls = URL.objects.filter(owner=request.user).with_details()
-        serializer = URLDetailSerializer(urls, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
 class UrlAnalyticsView(APIView):
     """
     API View to retrieve analytics for a shortened URL.
@@ -242,22 +260,37 @@ class UrlAnalyticsView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        description="Get click statistics per country for a given short code. Only accessible by the owner.",
+        description="Get detailed analytics for a shortened URL. Premium users get geo-location and time-series data.",
         responses={
             200: OpenApiResponse(
-                description="List of click statistics per country.",
+                description="Analytics data.",
                 examples=[
                     OpenApiExample(
-                        "Success",
-                        value=[
-                            {"country": "US", "total_clicks": 150},
-                            {"country": "UK", "total_clicks": 85},
-                            {"country": None, "total_clicks": 20},
-                        ],
-                    )
+                        "Premium Success",
+                        value={
+                            "short_code": "Ab123",
+                            "total_clicks": 255,
+                            "geo_breakdown": [
+                                {"country": "US", "total_clicks": 150},
+                                {"country": "UK", "total_clicks": 85},
+                            ],
+                            "time_series": [
+                                {"date": "2023-10-01", "total_clicks": 10},
+                                {"date": "2023-10-02", "total_clicks": 15},
+                            ],
+                        },
+                    ),
+                    OpenApiExample(
+                        "Free Success",
+                        value={
+                            "short_code": "Ab123",
+                            "total_clicks": 255,
+                        },
+                    ),
                 ],
             ),
             404: OpenApiResponse(description="Short code not found"),
+            403: OpenApiResponse(description="Permission denied"),
         },
     )
     def get(self, request, short_code):
@@ -271,18 +304,17 @@ class UrlAnalyticsView(APIView):
                     status=status.HTTP_403_FORBIDDEN,
                 )
 
-            # Tiered Logic: Access to detailed analytics restricted to Premium/Admin
-            if request.user.tier == request.user.Tier.FREE:
-                return Response(
-                    {
-                        "error": "Detailed analytics are only available for Premium users."
-                    },
-                    status=status.HTTP_403_FORBIDDEN,
-                )
+            response_data = {
+                "short_code": short_code,
+                "total_clicks": url_obj.click_count,
+            }
 
-            # Use the optimized aggregation method in the model
-            stats = url_obj.clicks_per_country()
-            return Response(stats, status=status.HTTP_200_OK)
+            # Tiered Logic: Access to detailed analytics restricted to Premium/Admin
+            if request.user.tier != request.user.Tier.FREE:
+                response_data["geo_breakdown"] = url_obj.clicks_per_country()
+                response_data["time_series"] = url_obj.clicks_over_time()
+
+            return Response(response_data, status=status.HTTP_200_OK)
         except URL.DoesNotExist:
             return Response(
                 {"error": "Short code not found"}, status=status.HTTP_404_NOT_FOUND
@@ -321,7 +353,55 @@ class UrlDetailView(APIView):
     @extend_schema(
         request=ShortenUrlSerializer,
         responses={200: URLDetailSerializer},
-        description="Update a shortened URL. Only accessible by the owner.",
+        description="Update a shortened URL. Only accessible by the owner. Supports optional click count reset.",
+        parameters=[
+            OpenApiParameter(
+                name="reset_clicks",
+                type=bool,
+                location=OpenApiParameter.QUERY,
+                description="Reset the click count for this URL if true.",
+            ),
+        ],
+    )
+    def put(self, request, short_code):
+        url_obj = self.get_object(short_code)
+        if not url_obj:
+            return Response(
+                {"error": "Short code not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = ShortenUrlSerializer(data=request.data)
+        if serializer.is_valid():
+            # Apply updates
+            url_obj.original_url = serializer.validated_data["url"]
+            url_obj.title = serializer.validated_data.get("title", url_obj.title)
+            url_obj.description = serializer.validated_data.get(
+                "description", url_obj.description
+            )
+            url_obj.custom_alias = serializer.validated_data.get(
+                "custom_alias", url_obj.custom_alias
+            )
+            url_obj.expires_at = serializer.validated_data.get(
+                "expires_at", url_obj.expires_at
+            )
+
+            # Click count reset logic
+            reset_clicks = (
+                request.query_params.get("reset_clicks", "false").lower() == "true"
+            )
+            if reset_clicks:
+                url_obj.click_count = 0
+                # Delete related clicks for detailed stats
+                url_obj.clicks.all().delete()
+
+            url_obj.save()
+            return Response(URLDetailSerializer(url_obj).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @extend_schema(
+        request=ShortenUrlSerializer,
+        responses={200: URLDetailSerializer},
+        description="Partially update a shortened URL. Only accessible by the owner.",
     )
     def patch(self, request, short_code):
         url_obj = self.get_object(short_code)
@@ -332,13 +412,17 @@ class UrlDetailView(APIView):
 
         serializer = ShortenUrlSerializer(data=request.data, partial=True)
         if serializer.is_valid():
-            # Apply updates (simplified for demonstration)
+            # Apply updates
             if "url" in serializer.validated_data:
                 url_obj.original_url = serializer.validated_data["url"]
             if "title" in serializer.validated_data:
                 url_obj.title = serializer.validated_data["title"]
             if "description" in serializer.validated_data:
                 url_obj.description = serializer.validated_data["description"]
+            if "custom_alias" in serializer.validated_data:
+                url_obj.custom_alias = serializer.validated_data["custom_alias"]
+            if "expires_at" in serializer.validated_data:
+                url_obj.expires_at = serializer.validated_data["expires_at"]
 
             url_obj.save()
             return Response(URLDetailSerializer(url_obj).data)
