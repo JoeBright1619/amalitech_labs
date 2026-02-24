@@ -75,11 +75,6 @@ class PreviewClientTests(TestCase):
             ),
         ]
 
-        # Note: We need to decrease the wait time for tests to run fast
-        # But PreviewServiceClient uses wait_exponential.
-        # We can patch the retry decorator or just wait.
-        # For simplicity in this environment, let's just assert the call count.
-
         with patch("tenacity.nap.time.sleep", return_value=None):
             result = self.client.fetch_preview("https://retry.com")
 

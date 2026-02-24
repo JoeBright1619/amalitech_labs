@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import redirect
+from django.core.cache import cache
 from drf_spectacular.utils import (
     extend_schema,
     OpenApiExample,
@@ -28,6 +29,7 @@ class ShortenUrlView(GenericAPIView):
     serializer_class = ShortenUrlSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = PageNumberPagination
+    throttle_scope = "url_create"
 
     def get_service(self):
         repo = ORMUrlRepository()
@@ -77,7 +79,7 @@ class ShortenUrlView(GenericAPIView):
             custom_alias = serializer.validated_data.get("custom_alias")
 
             # Tiered Logic: Limit Free users to 10 URLs
-            if user.tier == user.Tier.FREE:
+            if not user.is_premium:
                 active_url_count = URL.objects.filter(
                     owner=user, is_active=True
                 ).count()
@@ -90,7 +92,7 @@ class ShortenUrlView(GenericAPIView):
                     )
 
             # Tiered Logic: Restrict custom aliases to Premium users
-            if custom_alias and user.tier == user.Tier.FREE:
+            if custom_alias and not user.is_premium:
                 return Response(
                     {"error": "Custom aliases are only available for Premium users."},
                     status=status.HTTP_403_FORBIDDEN,
@@ -395,6 +397,8 @@ class UrlDetailView(APIView):
                 url_obj.clicks.all().delete()
 
             url_obj.save()
+            # Invalidate cache
+            cache.delete(f"url:{short_code}")
             return Response(URLDetailSerializer(url_obj).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -425,12 +429,22 @@ class UrlDetailView(APIView):
                 url_obj.expires_at = serializer.validated_data["expires_at"]
 
             url_obj.save()
+            # Invalidate cache
+            cache.delete(f"url:{short_code}")
             return Response(URLDetailSerializer(url_obj).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(
         responses={204: None},
-        description="Delete a shortened URL. Only accessible by the owner.",
+        description="Deactivate or Delete a shortened URL. Only accessible by the owner.",
+        parameters=[
+            OpenApiParameter(
+                name="permanent",
+                type=bool,
+                location=OpenApiParameter.QUERY,
+                description="If true, permanently delete the URL. Defaults to false (deactivation).",
+            ),
+        ],
     )
     def delete(self, request, short_code):
         url_obj = self.get_object(short_code)
@@ -439,5 +453,14 @@ class UrlDetailView(APIView):
                 {"error": "Short code not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
-        url_obj.delete()
+        permanent = request.query_params.get("permanent", "false").lower() == "true"
+        if permanent:
+            url_obj.delete()
+        else:
+            url_obj.is_active = False
+            url_obj.save()
+
+        # Invalidate cache
+        cache.delete(f"url:{short_code}")
+
         return Response(status=status.HTTP_204_NO_CONTENT)

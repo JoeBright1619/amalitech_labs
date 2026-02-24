@@ -19,10 +19,20 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop("password_confirm")
+
+        tier = validated_data.get("tier", User.Tier.FREE)
+        print("Tier:", tier)
+        # Set premium status based on tier
+        if tier == User.Tier.FREE:
+            is_premium = False
+        else:
+            is_premium = True
+
         user = User.objects.create_user(
             username=validated_data["username"],
             email=validated_data["email"],
             password=validated_data["password"],
-            tier=validated_data.get("tier", User.Tier.FREE),
+            tier=tier,
+            is_premium=is_premium,
         )
         return user

@@ -39,7 +39,9 @@ class UrlShortenerService:
             while self.repository.exists(short_code):
                 short_code = self._generate_random_code()
 
-        self.repository.save_mapping(short_code, original_url, user=user, **kwargs)
+        self.repository.save_mapping(
+            short_code, original_url, user=user, custom_alias=custom_alias, **kwargs
+        )
         return short_code
 
     def get_original_url(

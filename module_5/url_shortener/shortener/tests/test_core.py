@@ -3,18 +3,55 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 from unittest.mock import patch
-
-
 from django.contrib.auth import get_user_model
+from shortener.services import UrlShortenerService
+from shortener.repositories import ORMUrlRepository
 
 User = get_user_model()
+
+
+class CoreServiceTests(TestCase):
+    def setUp(self):
+        self.repo = ORMUrlRepository()
+        self.service = UrlShortenerService(self.repo)
+
+    def test_short_code_generation_uniqueness(self):
+        """
+        Test that generated short codes are unique and collisions are handled.
+        """
+        # Create a user to avoid null constraint if the repo requires one, or pass None if allowed
+        user = User.objects.create_user(username="testuser_unique", password="password")
+
+        # We will mock _generate_random_code to force a collision
+        codes_to_return = ["COLLSN", "COLLSN", "UNIQUE"]
+
+        with patch.object(
+            self.service, "_generate_random_code", side_effect=codes_to_return
+        ):
+            # First one gets 'COLLSN'
+            code1 = self.service.shorten_url("http://google.com", user=user)
+            self.assertEqual(code1, "COLLSN")
+
+            # Second one gets 'COLLSN', then 'COLLSN' (collision), then 'UNIQUE'
+            code2 = self.service.shorten_url("http://example.com", user=user)
+            self.assertEqual(code2, "UNIQUE")
+
+    def test_short_code_format_validation(self):
+        """
+        Test that the generated short code is alphanumeric and correct length.
+        """
+        code = self.service._generate_random_code()
+        self.assertEqual(len(code), self.service.CODE_LENGTH)
+        self.assertTrue(code.isalnum())
 
 
 class ApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.shorten_url = reverse("v1:shorten_url")
-        self.user = User.objects.create_user(username="testuser", password="password")
+        self.shorten_url = reverse("v1:url_list_create")
+        self.user = User.objects.create_user(
+            username="testuser", password="password", is_premium=True, tier="Premium"
+        )
         self.client.force_authenticate(user=self.user)
 
     @patch("api.views.UrlShortenerService")
@@ -68,6 +105,7 @@ class ApiTests(TestCase):
         url = reverse("redirect_url", kwargs={"short_code": "TestCode"})
         response = self.client.get(url)
 
+        # 302 Found is used in RedirectView
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
         self.assertEqual(response.url, "https://www.example.com")
 
@@ -82,4 +120,15 @@ class ApiTests(TestCase):
         url = reverse("redirect_url", kwargs={"short_code": "Missing"})
         response = self.client.get(url)
 
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_api_versioning_enforcement(self):
+        """Test only /api/v1/ routes are valid for the current API."""
+        # Valid
+        response = self.client.get("/api/v1/urls/")
+        # Status depends on auth/data, but it shouldn't be 404
+        self.assertNotEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # Invalid version
+        response = self.client.get("/api/v2/urls/")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

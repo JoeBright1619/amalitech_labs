@@ -14,11 +14,19 @@ class ShortenUrlSerializer(serializers.Serializer):
             "required": "URL field is required.",
         },
     )
+    from django.core.validators import RegexValidator
+
     custom_alias = serializers.CharField(
         required=False,
         allow_null=True,
         max_length=10,
         help_text="Optional custom alias for premium users.",
+        validators=[
+            RegexValidator(
+                regex=r"^[a-zA-Z0-9_-]+$",
+                message="Custom alias can only contain alphanumeric characters, hyphens, and underscores.",
+            )
+        ],
     )
     tags = serializers.ListField(
         child=serializers.CharField(max_length=50),
@@ -29,6 +37,14 @@ class ShortenUrlSerializer(serializers.Serializer):
     description = serializers.CharField(required=False, allow_blank=True)
     favicon = serializers.URLField(required=False, allow_null=True)
     expires_at = serializers.DateTimeField(required=False, allow_null=True)
+
+    def validate_url(self, value):
+        from urllib.parse import urlparse
+
+        request = self.context.get("request")
+        if request and request.get_host() in urlparse(value).netloc:
+            raise serializers.ValidationError("Cannot shorten URLs from this domain.")
+        return value
 
 
 class TagSerializer(serializers.ModelSerializer):
