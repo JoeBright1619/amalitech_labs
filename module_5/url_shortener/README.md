@@ -1,90 +1,86 @@
-# URL Shortener Microservice
+# AmaliTech URL Shortener API
 
-A production-ready URL Shortener built with Django REST Framework and Redis.
-Designed for high performance, utilizing Redis as the primary data store for URL mappings.
+A professional, high-performance, and feature-rich URL shortener microservice built with **Django REST Framework**, **PostgreSQL**, **Redis**, and **Celery**.
 
-## Features
+## 🚀 Overview
 
-- **Shorten URL**: POST to `/api/shorten/` to generate a unique short code.
-- **Redirect**: Access `/<short_code>/` to be redirected to the original URL.
-- **Redis Backed**: High-speed key-value storage.
-- **Dockerized**: Fully containerized with Docker and Docker Compose.
-- **OpenAPI Docs**: Auto-generated Swagger UI.
-- **Production Ready**: Gunicorn server, Environment variables, Logging.
+This service provides robust URL shortening capabilities with a focus on high performance, scalability, and developer experience. It features tiered user access (Free vs. Premium), real-time analytics, async metadata fetching, and microservice integration for URL previews.
 
-## Prerequisites
+## 🏗️ Architecture Diagram
 
-- Docker & Docker Compose
-- (Optional) Python 3.12+ and Poetry for local development
+![Architecture Diagram](./architecture_diagram.svg)
 
-## Getting Started
+## 🛠️ Getting Started (Docker)
 
-### Using Docker (Recommended)
+The project is fully containerized for a seamless development experience.
 
-1.  Clone the repository:
+### 1. Build and Run
 
-    ```bash
-    git clone <repository-url>
-    cd url_shortener
-    ```
+```bash
+# Build and start all services (API, DB, Redis, Celery)
+docker-compose up --build
+```
 
-2.  Build and run the containers:
+### 2. Database Setup
 
-    ```bash
-    docker-compose up --build
-    ```
+```bash
+# Run migrations
+docker-compose exec api python manage.py migrate
 
-3.  Access the service:
-    - **API**: `http://localhost:8000/api/shorten/`
-    - **Swagger UI**: `http://localhost:8000/api/schema/swagger-ui/`
-    - **Redis**: Port `6379` exposed locally if needed.
+# Create a superuser (for Admin access)
+docker-compose exec api python manage.py createsuperuser
+```
 
-### Local Development
+### 3. Run Tests
 
-1.  Install dependencies:
+```bash
+# Run the complete test suite (38+ tests)
+docker-compose exec api poetry run python manage.py test shortener.tests
+```
 
-    ```bash
-    poetry install
-    ```
+The API will be available at `http://localhost:8000`.
 
-2.  Start Redis (ensure it's running on localhost:6379 or update .env).
+## 🔌 API Endpoints
 
-3.  Run the server:
+### Authentication
 
-    ```bash
-    poetry run python manage.py runserver
-    ```
+| Method | Endpoint                 | Description                        | Access |
+| :----- | :----------------------- | :--------------------------------- | :----- |
+| POST   | `/api/v1/register/`      | Register a new user (Free/Premium) | Public |
+| POST   | `/api/v1/login/`         | Obtain JWT Access & Refresh tokens | Public |
+| POST   | `/api/v1/token/refresh/` | Refresh existing access token      | Public |
 
-4.  Run tests:
-    ```bash
-    poetry run python manage.py test shortener
-    ```
+### URL Management
 
-## API Documentation
+| Method | Endpoint               | Description                             | Access        |
+| :----- | :--------------------- | :-------------------------------------- | :------------ |
+| POST   | `/api/v1/urls/`        | Shorten a long URL                      | Authenticated |
+| GET    | `/api/v1/urls/`        | List URLs owned by user (supports tags) | Authenticated |
+| GET    | `/api/v1/urls/{code}/` | Get detailed URL metadata               | Owner         |
+| PATCH  | `/api/v1/urls/{code}/` | Update original URL or alias            | Owner         |
+| DELETE | `/api/v1/urls/{code}/` | Deactivate or permanently delete URL    | Owner         |
 
-Interactive API documentation is available at `/api/schema/swagger-ui/`.
+### Redirect & Analytics
 
-### Endpoints
+| Method | Endpoint                         | Description                               | Access |
+| :----- | :------------------------------- | :---------------------------------------- | :----- |
+| GET    | `/{code}/`                       | High-speed redirect to original URL       | Public |
+| GET    | `/api/v1/urls/{code}/analytics/` | Click stats (Geo/Time-series for Premium) | Owner  |
 
-- `POST /api/shorten/`:
-  - Body: `{"url": "https://example.com"}`
-  - Response: `{"short_code": "Abc12", "short_url": "http://.../Abc12/"}`
+### System Health
 
-- `GET /<short_code>/`:
-  - Redirects to the original URL (302 Found).
-  - Returns 404 if code not found.
+| Method | Endpoint          | Description                 | Access |
+| :----- | :---------------- | :-------------------------- | :----- |
+| GET    | `/api/v1/health/` | Health check for DB & Redis | Public |
 
-## Architecture
+## 🌟 Key Features
 
-- **API Layer**: Django REST Framework Views & Serializers.
-- **Service Layer**: `UrlShortenerService` handles business logic.
-- **Repository Layer**: `RedisUrlRepository` abstracts Redis access.
-- **Storage**: Redis (Persistent).
+- **Caching**: 0.1ms redirects using Redis key-value storage.
+- **Analytics**: Geo-location inference and click tracking denormalization.
+- **Microservices**: Async preview generation with circuit breakers and retries.
+- **Security**: JWT-based auth, RBAC, and login rate limiting (throttling).
+- **Optimization**: N+1 query prevention using `select_related` and `prefetch_related`.
 
-## Configuration
+## 📖 Documentation
 
-Environment variables are managed via `.env` file (using `python-decouple`).
-
-- `DEBUG`: Toggle debug mode.
-- `SECRET_KEY`: Django secret key.
-- `REDIS_URL`: Connection string for Redis.
+Interactive Swagger UI is available at `http://localhost:8000/api/schema/swagger-ui/`.
